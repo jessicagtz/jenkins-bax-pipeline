@@ -60,8 +60,9 @@ properties([
         choices: 'FileCopy',
         description: 'Select script:'),
 
-        string(name: 'OriginPath', description: 'File you want to move:'),
-        string(name: 'DestinationPath', description: 'Location to move file to:')
+        string(name: 'TargetPath', description: 'File you want to move:'),
+        string(name: 'ErrorCode', description: 'Error to search for:'),
+        string(name: 'OutputSummary', description: 'Path to place review:')
     ])
 ])
 
@@ -95,7 +96,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }
@@ -106,7 +107,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }
@@ -117,7 +118,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     } 
@@ -128,7 +129,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }
@@ -139,7 +140,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }
@@ -150,7 +151,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }    
                             } 
                     }
@@ -161,7 +162,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }
@@ -172,7 +173,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }
@@ -183,7 +184,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\SearchError.ps1'")
                                 }
                             } 
                     }

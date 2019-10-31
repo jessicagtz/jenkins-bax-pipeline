@@ -57,11 +57,11 @@ properties([
             ]
         ],
         choice(name: 'script',
-        choices: 'FileCopy',
+        choices: 'DumpFileCleanup',
         description: 'Select script:'),
 
-        string(name: 'OriginPath', description: 'File you want to move:'),
-        string(name: 'DestinationPath', description: 'Location to move file to:')
+        string(name: 'SourcePath', description: 'File(s) you want to remove:'),
+        string(name: 'OutputSummary', description: 'Path to place review:')
     ])
 ])
 
@@ -95,7 +95,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
@@ -106,7 +106,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
@@ -117,7 +117,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     } 
@@ -128,7 +128,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
@@ -139,7 +139,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
@@ -150,7 +150,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }    
                             } 
                     }
@@ -161,7 +161,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
@@ -172,7 +172,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
@@ -183,7 +183,7 @@ pipeline {
                                     [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                     branch: 'master'])
                                 script {
-                                    powershell(". '.\\CopyFile.ps1'")
+                                    powershell(". '.\\DeleteFiles.ps1'")
                                 }
                             } 
                     }
