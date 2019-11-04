@@ -56,12 +56,12 @@ properties([
                 ]
             ]
         ],
+
         choice(name: 'script',
         choices: 'DumpFileCleanup',
         description: 'Select script:'),
 
-        string(name: 'SourcePath', description: 'File(s) you want to remove:'),
-        string(name: 'OutputSummary', description: 'Path to place review:')
+        string(name: 'SourcePath', description: 'File(s) you want to remove:')
     ])
 ])
 
@@ -73,120 +73,29 @@ pipeline {
         stage ('Parameter Validation') {
         //steps in test stage
             steps {
-                echo 'Checking environment input:'
-                echo "Selected: ${params.environment}"
-                echo 'Checking server input:'
-                echo "Selected: ${params.server}"
-                echo 'Checking script input'
-                echo "Selected: ${params.script}"
-                echo 'Checking username input:'
-                echo "Selected: ${params.WindowsUser}"
-                echo 'Checking password:'
-                echo "Selected: ${params.WindowsPassword}"
+                echo "Checking environment input... Selected: ${params.environment}"
+                echo "Checking server input... Selected: ${params.server}"
+                echo "Checking script input... Selected: ${params.script}"
+                echo "Checking source paths... Selected: ${params.SourcePath}"
+            }
+        }
+        stage('Script Checkout') {
+            steps {
+                echo "Checking out script from file share."
+                git (
+                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
+                    branch: 'master'])
             }
         }
         stage ('Execute Script') {
             steps {
                 script {
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
+                    echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
+                    node(label: "${params:environment}") {
+                        script {
+                            powershell(". '.\\DeleteFiles.ps1'")
+                        }
                     } 
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }    
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
                 }
             }
         }
