@@ -102,11 +102,13 @@ pipeline {
                 // Output parameters selected at time of build to Jenkins console
                 echo '---------------------------------------------------------'
                 echo "Checking environment input... user selected: ${params.environment}"
+                script {
                 for (i in serverGroup) {
-                echo "Checking server input(s)... user selected: $i"
-                }
-                for (x in serviceGroup) {
-                    echo "Checking service input(s)... user selected: $x"
+                    echo "Checking server input(s)... user selected: $i"
+                    }
+                    for (x in serviceGroup) {
+                        echo "Checking service input(s)... user selected: $x"
+                    }
                 }
                 echo "Checking script input... user selected: ${params.script}"
                 echo '---------------------------------------------------------'
