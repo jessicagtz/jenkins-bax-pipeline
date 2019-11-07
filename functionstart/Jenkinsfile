@@ -102,6 +102,7 @@ pipeline {
                 echo '---------------------------------------------------------'
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking server input(s)... user selected: ${params.server}"
+                echo "Checking service input(s)... user selected: ${params.service}"
                 echo "Checking script input... user selected: ${params.script}"
                 echo '---------------------------------------------------------'
             }
