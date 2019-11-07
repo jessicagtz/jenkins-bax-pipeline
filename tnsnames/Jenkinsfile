@@ -22,7 +22,7 @@ properties([
                         'return["Dev","Test","Prod"]'
                 ]
             ]
-        ],  
+        ], 
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Server from the Dropdown List', 
@@ -44,49 +44,30 @@ properties([
                     sandbox: false, 
                     script: 
                         ''' if (environment.equals("Dev")){
-                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                                return["Dev1","Dev2","Dev3"]
                             }
                             else if(environment.equals("Test")){
-                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                                return["Test1","Test2","Test3"]
                             }
                             else if(environment.equals("Prod")){
-                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                                return["Prod1","Prod2","Prod3"]
                             }
                         '''
                 ]
             ]
         ],
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the service(s) from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'service', 
-            randomName: 'choice-parameter-5631314439613978', 
-            script: [
-                $class: 'GroovyScript', 
-                fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return[\'Could not get Env\']'
-                ], 
-                script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return["DISP01","DISP02","DISP03"]'
-                ]
-            ]
-        ],  
+
         choice(name: 'script',
-        choices: 'Start\nStop',
-        description: 'Select script:')
+        choices: 'tnsnames',
+        description: 'Select script:'),
+
+        string(name: 'TargetPath', description: 'File(s) you want to review:'),
+        string(name: 'ErrorCode', description: 'Error to search for:'),
+        string(name: 'OutputSummary', description: 'Path to place review:')
     ])
 ])
 
-// Create string array of input from servers
-def String[] serverGroup = "${params.server}".split(',');
+def String[] serverGroup = "${params.environment}".split(',');
 
 // Create the pipeline
 pipeline {
@@ -100,9 +81,12 @@ pipeline {
             steps {
                 // Output parameters selected at time of build to Jenkins console
                 echo '---------------------------------------------------------'
-                echo "Checking environment input... user selected: ${params.environment}"
-                echo "Checking server input(s)... user selected: ${params.server}"
-                echo "Checking script input... user selected: ${params.script}"
+                echo "Checking environment input... selected: ${params.environment}"
+                echo "Checking server input(s)... selected: ${params.server}"
+                echo "Checking script input... selected: ${params.script}"
+                echo "Checking target input... selected: ${params.TargetPath}"
+                echo "Checking error code input... selected: ${params.ErrorCode}"
+                echo "Checking output summary input... selected: ${params.OutputSummary}"
                 echo '---------------------------------------------------------'
             }
         }
@@ -114,17 +98,19 @@ pipeline {
                     for (x in serverGroup) { 
                         // Output each server to console with line for spacing
                         echo "$x ---------------------------------------------------------\n"
-                        echo "The script execution in this block is ${params.script} in the ${params.environment} environment on the $x server."
+
+                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
                         // Where the script will be executed
-                        // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
-                        node(label: "Dev") {
+                        node(label: "$x") {
                             // Checkout scripts from remote repo and download to Jenkins master 
                             git (
                                 [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                 branch: 'master'])
                             // Execute script on servers
                             script {
-                                powershell(". '.\\startStopServices.ps1'; startStopServices -startStop ${params.script} -server $x -services ${params.service}")
+                                //powershell(". '.\\SearchError.ps1'")
+                                //powershell("dir")
+                                powershell("Copy-Item -Path C:\\Jenkins\\workspace\\Cognos\\TNSNames-Change\\tnsnames.txt -Destination C:\\copy -Recurse")
                             }
                         } 
                     }

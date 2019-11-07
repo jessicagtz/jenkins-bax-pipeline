@@ -56,59 +56,49 @@ properties([
                 ]
             ]
         ],
-
         choice(name: 'script',
-        choices: 'DumpFileCleanup',
+        choices: 'FileCopy',
         description: 'Select script:'),
 
-        string(name: 'TargetPath', description: 'File(s) you want to review:'),
-        string(name: 'ErrorCode', description: 'Error to search for:'),
-        string(name: 'OutputSummary', description: 'Path to place review:')
+        string(name: 'OriginPath', description: 'File you want to move:'),
+        string(name: 'DestinationPath', description: 'Location to move file to:')
     ])
 ])
 
 def String[] serverGroup = "${params.environment}".split(',');
 
-// Create the pipeline
 pipeline {
-    // Allows pipeline to be run on any available agent
     agent any
-    // Stages in build pipeline
+    // stages in build pipeline
     stages {
-        // First stage in pipeline: review inputs and output to Jenkins console
+        //first stage
         stage ('Parameter Validation') {
-        // Steps in Parameter Validation stage
+        //steps in test stage
             steps {
-                // Output parameters selected at time of build to Jenkins console
-                echo '---------------------------------------------------------'
-                echo "Checking environment input... selected: ${params.environment}"
-                echo "Checking server input(s)... selected: ${params.server}"
-                echo "Checking script input... selected: ${params.script}"
-                echo "Checking target input... selected: ${params.TargetPath}"
-                echo "Checking error code input... selected: ${params.ErrorCode}"
-                echo "Checking output summary input... selected: ${params.OutputSummary}"
-                echo '---------------------------------------------------------'
+                echo 'Checking environment input:'
+                echo "Selected: ${params.environment}"
+                echo 'Checking server input:'
+                echo "Selected: ${params.server}"
+                echo 'Checking script input'
+                echo "Selected: ${params.script}"
+                echo 'Checking username input:'
+                echo "Selected: ${params.WindowsUser}"
+                echo 'Checking password:'
+                echo "Selected: ${params.WindowsPassword}"
             }
         }
-        // Second stage in pipeline: download script and execute on in-scope servers
         stage ('Execute Script') {
             steps {
                 script {
-                    // For Loop to utilize the serverGroup array 
                     for (x in serverGroup) { 
-                        // Output each server to console with line for spacing
-                        echo "$x ---------------------------------------------------------\n"
-
-                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
-                        // Where the script will be executed
+                        echo "$x \n"
+                        echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
                         node(label: "$x") {
-                            // Checkout scripts from remote repo and download to Jenkins master 
                             git (
                                 [url: 'https://github.com/tylersul/jenkins-bax.git', 
                                 branch: 'master'])
-                            // Execute script on servers
                             script {
-                                powershell(". '.\\SearchError.ps1'")
+                                powershell(". '.\\CopyFile.ps1'")
                             }
                         } 
                     }
@@ -117,6 +107,3 @@ pipeline {
         }
     }
 }
-
-
-

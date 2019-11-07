@@ -1,7 +1,7 @@
 properties([
     parameters([
         [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
+            choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Env Name from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
@@ -24,7 +24,7 @@ properties([
             ]
         ], 
         [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
+            choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Server from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
@@ -44,13 +44,13 @@ properties([
                     sandbox: false, 
                     script: 
                         ''' if (environment.equals("Dev")){
-                                return["Dev1","Dev2","Dev3"]
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
                             }
                             else if(environment.equals("Test")){
-                                return["Test1","Test2","Test3"]
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
                             }
                             else if(environment.equals("Prod")){
-                                return["Prod1","Prod2","Prod3"]
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
                             }
                         '''
                 ]
@@ -61,41 +61,56 @@ properties([
         choices: 'DumpFileCleanup',
         description: 'Select script:'),
 
-        string(name: 'SourcePath', description: 'File(s) you want to remove:')
+        choice(name: 'services',
+        choices: 'DISP\nWEB',
+        description: 'Select service:'),
+        
     ])
 ])
 
+def String[] serverGroup = "${params.environment}".split(',');
+
+// Create the pipeline
 pipeline {
+    // Allows pipeline to be run on any available agent
     agent any
-    // stages in build pipeline
+    // Stages in build pipeline
     stages {
-        //first stage
+        // First stage in pipeline: review inputs and output to Jenkins console
         stage ('Parameter Validation') {
-        //steps in test stage
+        // Steps in Parameter Validation stage
             steps {
-                echo "Checking environment input... Selected: ${params.environment}"
-                echo "Checking server input... Selected: ${params.server}"
-                echo "Checking script input... Selected: ${params.script}"
-                echo "Checking source paths... Selected: ${params.SourcePath}"
+                // Output parameters selected at time of build to Jenkins console
+                echo '---------------------------------------------------------'
+                echo "Checking environment input... selected: ${params.environment}"
+                echo "Checking server input(s)... selected: ${params.server}"
+                echo "Checking script input... selected: ${params.script}"
+                echo "Checking directory input... selected: ${params.SourcePath}"
+                echo '---------------------------------------------------------'
             }
         }
-        stage('Script Checkout') {
-            steps {
-                echo "Checking out script from file share."
-                git (
-                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                    branch: 'master'])
-            }
-        }
+        // Second stage in pipeline: download script and execute on in-scope servers
         stage ('Execute Script') {
             steps {
                 script {
-                    echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                    node(label: "${params:environment}") {
-                        script {
-                            powershell(". '.\\DeleteFiles.ps1'")
-                        }
-                    } 
+                    // For Loop to utilize the serverGroup array 
+                    for (x in serverGroup) { 
+                        // Output each server to console with line for spacing
+                        echo "$x ---------------------------------------------------------\n"
+
+                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
+                        // Where the script will be executed
+                        node(label: "$x") {
+                            // Checkout scripts from remote repo and download to Jenkins master 
+                            git (
+                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
+                                branch: 'master'])
+                            // Execute script on servers
+                            script {
+                                powershell(". '.\\DumpFiles_V2.ps1'; DumpCleanup -server $x -Services ${params.services}")
+                            }
+                        } 
+                    }
                 }
             }
         }

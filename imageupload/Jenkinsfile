@@ -22,7 +22,7 @@ properties([
                         'return["Dev","Test","Prod"]'
                 ]
             ]
-        ],  
+        ], 
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Server from the Dropdown List', 
@@ -56,36 +56,18 @@ properties([
                 ]
             ]
         ],
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the service(s) from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'service', 
-            randomName: 'choice-parameter-5631314439613978', 
-            script: [
-                $class: 'GroovyScript', 
-                fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return[\'Could not get Env\']'
-                ], 
-                script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return["DISP01","DISP02","DISP03"]'
-                ]
-            ]
-        ],  
+
         choice(name: 'script',
-        choices: 'Start\nStop',
-        description: 'Select script:')
+        choices: 'DumpFileCleanup',
+        description: 'Select script:'),
+
+        choice(name: 'services',
+        choices: 'DISP\nWEB',
+        description: 'Select service:'),
+        
     ])
 ])
 
-// Create string array of input from servers
 def String[] serverGroup = "${params.server}".split(',');
 
 // Create the pipeline
@@ -100,9 +82,10 @@ pipeline {
             steps {
                 // Output parameters selected at time of build to Jenkins console
                 echo '---------------------------------------------------------'
-                echo "Checking environment input... user selected: ${params.environment}"
-                echo "Checking server input(s)... user selected: ${params.server}"
-                echo "Checking script input... user selected: ${params.script}"
+                echo "Checking environment input... selected: ${params.environment}"
+                echo "Checking server input(s)... selected: ${params.server}"
+                echo "Checking script input... selected: ${params.script}"
+                echo "Checking directory input... selected: ${params.SourcePath}"
                 echo '---------------------------------------------------------'
             }
         }
@@ -114,9 +97,9 @@ pipeline {
                     for (x in serverGroup) { 
                         // Output each server to console with line for spacing
                         echo "$x ---------------------------------------------------------\n"
-                        echo "The script execution in this block is ${params.script} in the ${params.environment} environment on the $x server."
+
+                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
                         // Where the script will be executed
-                        // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
                         node(label: "Dev") {
                             // Checkout scripts from remote repo and download to Jenkins master 
                             git (
@@ -124,7 +107,7 @@ pipeline {
                                 branch: 'master'])
                             // Execute script on servers
                             script {
-                                powershell(". '.\\startStopServices.ps1'; startStopServices -startStop ${params.script} -server $x -services ${params.service}")
+                                powershell(". '.\\WebImages_V2.ps1'; WebImages -server $x -Services ${params.services}")
                             }
                         } 
                     }

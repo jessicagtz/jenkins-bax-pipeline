@@ -16,8 +16,6 @@ def cmd_exec(command) {
 def remoteHostname = "13.56.207.228"
 def remoteUsername = "Administrator"
 def remotePassword = "scgcuAzb&38Df!6WqoVTPwr(nDma)inx"
-
-def servers = "${env:password}"
 def devServers = ["Test1", "Test2", "Test3"]
 def testServers = ["Test1", "Test2", "Test3"]
 def ProdServers = ["Test1", "Test2", "Test3"]
@@ -89,6 +87,8 @@ properties([
     ])
 ])
 
+def String[] serverGroup = "${params.environment}".split(',');
+
 pipeline {
     agent any
     // stages in build pipeline
@@ -109,6 +109,8 @@ pipeline {
                 echo 'Checking password:'
                 echo "Selected: ${params.WindowsPassword}"
             }
+            }
+
         }
         stage ('Checkout script.') {
             steps {
@@ -121,9 +123,19 @@ pipeline {
         }
         stage ('Execute Script') {
             steps {
-                node (label: 'master') {
+                script {
+                for (x in serverGroup) { 
+                echo "$x is being executed. \n" 
+                        
+                
+                node (label: "$x") {
                     echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                        //cmd_exec("%SystemRoot%\\system32\\windowspowershell\\v1.0\\powershell.exe get-date > C:\\Jenkinstest.txt")
+                        script {
+                            powershell(". '.\\DeleteFiles.ps1'")
+                        }
+                }
+                }
+                        /*//cmd_exec("%SystemRoot%\\system32\\windowspowershell\\v1.0\\powershell.exe get-date > C:\\Jenkinstest.txt")
                                 //script {
                                     //powershell ( 
                                     //'''
@@ -193,7 +205,7 @@ pipeline {
                                                 verbose: false)])
                 }
             }
-        }
+        }*/
     }
 }
 

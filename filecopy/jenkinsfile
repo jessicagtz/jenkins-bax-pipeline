@@ -1,7 +1,7 @@
 properties([
     parameters([
         [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
+            choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Env Name from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
@@ -24,7 +24,7 @@ properties([
             ]
         ], 
         [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
+            choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Server from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
@@ -56,136 +56,60 @@ properties([
                 ]
             ]
         ],
+
         choice(name: 'script',
         choices: 'FileCopy',
         description: 'Select script:'),
 
-        string(name: 'OriginPath', description: 'File you want to move:'),
-        string(name: 'DestinationPath', description: 'Location to move file to:')
+        string(name: 'OriginPath', description: 'File(s) you want to move:'),
+        string(name: 'DestinationPath', description: 'Directory to move file(s) to:')
     ])
 ])
 
+// Create string array of input from servers
+def String[] serverGroup = "${params.environment}".split(',');
+
+// Create the pipeline
 pipeline {
+    // Allows pipeline to be run on any available agent
     agent any
-    // stages in build pipeline
+    // Stages in build pipeline
     stages {
-        //first stage
+        // First stage in pipeline: review inputs and output to Jenkins console
         stage ('Parameter Validation') {
-        //steps in test stage
+        // Steps in Parameter Validation stage
             steps {
-                echo 'Checking environment input:'
-                echo "Selected: ${params.environment}"
-                echo 'Checking server input:'
-                echo "Selected: ${params.server}"
-                echo 'Checking script input'
-                echo "Selected: ${params.script}"
-                echo 'Checking username input:'
-                echo "Selected: ${params.WindowsUser}"
-                echo 'Checking password:'
-                echo "Selected: ${params.WindowsPassword}"
+                // Output parameters selected at time of build to Jenkins console
+                echo '---------------------------------------------------------'
+                echo "Checking environment input... selected: ${params.environment}"
+                echo "Checking server input(s)... selected: ${params.server}"
+                echo "Checking script input... selected: ${params.script}"
+                echo "Checking directory input... selected: ${params.OriginPath}"
+                echo "Checking directory input... selected: ${params.DestinationPath}"
+                echo '---------------------------------------------------------'
             }
         }
+        // Second stage in pipeline: download script and execute on in-scope servers
         stage ('Execute Script') {
             steps {
                 script {
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    } 
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }    
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\CopyFile.ps1'")
-                                }
-                            } 
+                    // For Loop to utilize the serverGroup array 
+                    for (x in serverGroup) { 
+                        // Output each server to console with line for spacing
+                        echo "$x ---------------------------------------------------------\n"
+
+                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
+                        // Where the script will be executed
+                        node(label: "$x") {
+                            // Checkout scripts from remote repo and download to Jenkins master 
+                            git (
+                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
+                                branch: 'master'])
+                            // Execute script on servers
+                            script {
+                                powershell(". '.\\CopyFile.ps1'")
+                            }
+                        } 
                     }
                 }
             }
