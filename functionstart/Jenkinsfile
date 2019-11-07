@@ -87,7 +87,7 @@ properties([
 
 // Create string array of input from servers
 def String[] serverGroup = "${params.server}".split(',');
-def String[] serviceGroup = "${params.service}".split(',');
+def String[] serviceGroup = "${params.service}".split(',')
 
 // Create the pipeline
 pipeline {
@@ -102,14 +102,8 @@ pipeline {
                 // Output parameters selected at time of build to Jenkins console
                 echo '---------------------------------------------------------'
                 echo "Checking environment input... user selected: ${params.environment}"
-                script {
-                for (i in serverGroup) {
-                    echo "Checking server input(s)... user selected: $i"
-                    }
-                    for (x in serviceGroup) {
-                        echo "Checking service input(s)... user selected: $x"
-                    }
-                }
+                echo "Checking server input(s)... user selected: ${params.server}"
+                echo "Checking service input(s)... user selected: ${params.service}"
                 echo "Checking script input... user selected: ${params.script}"
                 echo '---------------------------------------------------------'
             }
