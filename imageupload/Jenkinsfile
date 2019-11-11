@@ -1,5 +1,9 @@
 properties([
     parameters([
+        choice(name: 'tool',
+        choices: '\nCognos\nPlanningAnalytics',
+        description: 'Select tool:'),
+
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Env Name from the Dropdown List', 
@@ -58,7 +62,7 @@ properties([
         ],
 
         choice(name: 'script',
-        choices: 'DumpFileCleanup',
+        choices: 'ImageUpload',
         description: 'Select script:'),
 
         choice(name: 'services',
@@ -81,12 +85,13 @@ pipeline {
         // Steps in Parameter Validation stage
             steps {
                 // Output parameters selected at time of build to Jenkins console
-                echo '---------------------------------------------------------'
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking tool input... user selected: ${params.tool}"
                 echo "Checking environment input... selected: ${params.environment}"
                 echo "Checking server input(s)... selected: ${params.server}"
                 echo "Checking script input... selected: ${params.script}"
                 echo "Checking directory input... selected: ${params.SourcePath}"
-                echo '---------------------------------------------------------'
+                echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
         // Second stage in pipeline: download script and execute on in-scope servers
@@ -96,7 +101,7 @@ pipeline {
                     // For Loop to utilize the serverGroup array 
                     for (x in serverGroup) { 
                         // Output each server to console with line for spacing
-                        echo "$x ---------------------------------------------------------\n"
+                        echo "$x --------------------------------------------------------------------------------------------------\n"
 
                         echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
                         // Where the script will be executed

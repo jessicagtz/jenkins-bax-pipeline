@@ -1,8 +1,12 @@
 properties([
     parameters([
+        choice(name: 'tool',
+        choices: '\nCognos\nPlanningAnalytics',
+        description: 'Select tool:'),
+
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the Env Name from the Dropdown List', 
+            description: 'Select environment', 
             filterLength: 1, 
             filterable: false, 
             name: 'environment', 
@@ -23,6 +27,7 @@ properties([
                 ]
             ]
         ],  
+
         [$class: 'CascadeChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Server from the Dropdown List', 
@@ -56,6 +61,7 @@ properties([
                 ]
             ]
         ],
+
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the service(s) from the Dropdown List', 
@@ -79,15 +85,15 @@ properties([
                 ]
             ]
         ],  
+
         choice(name: 'script',
-        choices: 'Start\nStop',
+        choices: '\nStart\nStop',
         description: 'Select script:')
     ])
 ])
 
 // Create string array of input from servers
 def String[] serverGroup = "${params.server}".split(',');
-def String[] serviceGroup = "${params.service}".split(',')
 
 // Create the pipeline
 pipeline {
@@ -99,13 +105,20 @@ pipeline {
         stage ('Parameter Validation') {
         // Steps in Parameter Validation stage
             steps {
+                script {
+                    // If any parameter is blank, the build will fail
+                    if ("${params.tool}" == '' || "${params.environment}" == '' || "${params.server}" == '' || "${params.service}" == '' || "${params.script}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
                 // Output parameters selected at time of build to Jenkins console
-                echo '---------------------------------------------------------'
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking tool input... user selected: ${params.tool}"
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking server input(s)... user selected: ${params.server}"
                 echo "Checking service input(s)... user selected: ${params.service}"
                 echo "Checking script input... user selected: ${params.script}"
-                echo '---------------------------------------------------------'
+                echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
         // Second stage in pipeline: download script and execute on in-scope servers
@@ -115,8 +128,8 @@ pipeline {
                     // For Loop to utilize the serverGroup array 
                     for (x in serverGroup) { 
                         // Output each server to console with line for spacing
-                        echo "$x ---------------------------------------------------------\n"
-                        echo "The script execution in this block is ${params.script} in the ${params.environment} environment on the $x server."
+                        echo "$x --------------------------------------------------------------------------------------------------\n"
+                        echo "The script execution in this block is to ${params.script} services in the ${params.environment} environment on the $x server."
                         // Where the script will be executed
                         // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
                         node(label: "Dev") {
