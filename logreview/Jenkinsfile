@@ -1,4 +1,4 @@
-properties([
+/*properties([
     parameters([
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
@@ -66,6 +66,7 @@ properties([
         string(name: 'OutputSummary', description: 'Path to place review:')
     ])
 ])
+*/
 
 def String[] serverGroup = "${params.environment}".split(',');
 
@@ -81,12 +82,11 @@ pipeline {
             steps {
                 // Output parameters selected at time of build to Jenkins console
                 echo '---------------------------------------------------------'
+                echo "Checking tool input... selected: ${params.tool}"
                 echo "Checking environment input... selected: ${params.environment}"
+                echo "Checking region input... selected: ${params.region}"
                 echo "Checking server input(s)... selected: ${params.server}"
-                echo "Checking script input... selected: ${params.script}"
-                echo "Checking target input... selected: ${params.TargetPath}"
-                echo "Checking error code input... selected: ${params.ErrorCode}"
-                echo "Checking output summary input... selected: ${params.OutputSummary}"
+                echo "Checking error input... selected: ${params.errorCode}"
                 echo '---------------------------------------------------------'
             }
         }
@@ -99,7 +99,7 @@ pipeline {
                         // Output each server to console with line for spacing
                         echo "$x ---------------------------------------------------------\n"
 
-                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
+                        echo "The script execution in this block is to review logs with error code ${params.ErrorCode} in the ${params.environment} environment and ${params.region} region on the $x server."
                         // Where the script will be executed
                         node(label: "$x") {
                             // Checkout scripts from remote repo and download to Jenkins master 
