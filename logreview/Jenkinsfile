@@ -68,7 +68,7 @@
 ])
 */
 
-def String[] serverGroup = "${params.environment}".split(',');
+def String[] serverGroup = "${params.server}".split(',');
 
 // Create the pipeline
 pipeline {

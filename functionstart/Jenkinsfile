@@ -1,4 +1,4 @@
-properties([
+/*properties([
     parameters([
         choice(name: 'tool',
         choices: '\nCognos\nPlanningAnalytics',
@@ -97,7 +97,7 @@ properties([
         description: 'Select script:')
     ])
 ])
-
+*/
 // Create string array of input from servers
 def String[] serverGroup = "${params.server}".split(',');
 
@@ -113,7 +113,7 @@ pipeline {
             steps {
                 script {
                     // If any parameter is blank, the build will fail
-                    if ("${params.tool}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '' || "${params.service}" == '' || "${params.script}" == '') {
+                    if ("${params.tool}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
@@ -123,8 +123,6 @@ pipeline {
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking region input... user selected: ${params.region}"
                 echo "Checking server input(s)... user selected: ${params.server}"
-                echo "Checking service input(s)... user selected: ${params.service}"
-                echo "Checking script input... user selected: ${params.script}"
                 echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
@@ -136,7 +134,7 @@ pipeline {
                     for (x in serverGroup) { 
                         // Output each server to console with line for spacing
                         echo "$x --------------------------------------------------------------------------------------------------\n"
-                        echo "The script execution in this block is to ${params.script} services in the ${params.environment} ${params.region} environment on the $x server."
+                        echo "The script execution in this block will remove dump files in the ${params.environment} environment and ${params.region} region on the $x server."
                         // Where the script will be executed
                         // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
                         node(label: "Dev") {
