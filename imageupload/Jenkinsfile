@@ -89,7 +89,7 @@ pipeline {
             steps {
                 script {
                     // If any parameter is blank, the build will fail
-                    if ("${params.tool}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
@@ -139,7 +139,7 @@ pipeline {
                                         echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
                                         // Where the script will be executed
                                         // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
-                                        node(label: "Dev") {
+                                        /*node(label: "Dev") {
                                             // Checkout scripts from remote repo and download to Jenkins master 
                                             git (
                                                 [url: 'https://github.com/tylersul/jenkins-bax.git', 
@@ -153,7 +153,7 @@ pipeline {
                                                     powershell(". '.\\imageupload.ps1'; imageupload -server $serverX")
                                                 } 
                                             }
-                                        } 
+                                        } */
                             
                                     }
 
