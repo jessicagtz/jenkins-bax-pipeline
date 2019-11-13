@@ -121,7 +121,7 @@ pipeline {
                 }
                 // Output parameters selected at time of build to Jenkins console
                 echo '------------------------------------------------------------------------------------------------------------------'
-                echo "Checking tool input... user selected: ${params.tool}"
+                echo "Checking tool input... user selected: ${params.application}"
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking region input... user selected: ${params.region}"
                 echo "Checking server input(s)... user selected: ${params.server}"
@@ -164,7 +164,7 @@ pipeline {
                                                                                 
                                         // Output each server to console with line for spacing
                                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                                        echo "The script execution in this block is to ${params.script} services in the $b $a environment on the $serverX server."
+                                        echo "The script execution in this block will ${params.script} services in the $b $a environment on the $serverX server."
                                         // Where the script will be executed
                                         // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
                                         node(label: "Dev") {
