@@ -143,9 +143,11 @@ pipeline {
                                 
                                 if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
                                     if ("$a" != "USOH"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
                                         echo "Server $x does not exist for region $a"
                                     }
                                     else if ("$b" != "Prod"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
                                         echo "Server $x does not exist for region $a and environment $b"
                                     }
                                 }

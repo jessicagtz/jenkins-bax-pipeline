@@ -1,4 +1,4 @@
-properties([
+/*properties([
     parameters([
         [$class: 'ChoiceParameter', 
             choiceType: 'PT_MULTI_SELECT', 
@@ -65,9 +65,11 @@ properties([
         string(name: 'ErrorCode', description: 'Error to search for:'),
         string(name: 'OutputSummary', description: 'Path to place review:')
     ])
-])
+]) */
 
-def String[] serverGroup = "${params.environment}".split(',');
+def String[] serverGroup = "${params.server}".split(',');
+def String[] environmentGroup = "${params.environment}".split(',')
+def String[] regionGroup = "${params.region}".split(',')
 
 // Create the pipeline
 pipeline {
@@ -79,46 +81,84 @@ pipeline {
         stage ('Parameter Validation') {
         // Steps in Parameter Validation stage
             steps {
+                script {
+                    // If any parameter is blank, the build will fail
+                    if ("${params.tool}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
                 // Output parameters selected at time of build to Jenkins console
-                echo '---------------------------------------------------------'
-                echo "Checking environment input... selected: ${params.environment}"
-                echo "Checking server input(s)... selected: ${params.server}"
-                echo "Checking script input... selected: ${params.script}"
-                echo "Checking target input... selected: ${params.TargetPath}"
-                echo "Checking error code input... selected: ${params.ErrorCode}"
-                echo "Checking output summary input... selected: ${params.OutputSummary}"
-                echo '---------------------------------------------------------'
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking tool input... user selected: ${params.tool}"
+                echo "Checking environment input... user selected: ${params.environment}"
+                echo "Checking region input... user selected: ${params.region}"
+                echo "Checking server input(s)... user selected: ${params.server}"
+                echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
         // Second stage in pipeline: download script and execute on in-scope servers
         stage ('Execute Script') {
             steps {
                 script {
-                    // For Loop to utilize the serverGroup array 
-                    for (x in serverGroup) { 
-                        // Output each server to console with line for spacing
-                        echo "$x ---------------------------------------------------------\n"
+                    for (a in regionGroup) {
+                        for (b in environmentGroup) {
+                            // For Loop to utilize the serverGroup array 
+                            for (x in serverGroup) {
+                                def String serverX = ""
+                                serverX = "$x".replace("x", "$a")
+                                
+                                if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
+                                    if ("$a" != "USOH"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "Server $x does not exist for region $a"
+                                    }
+                                    else if ("$b" != "Prod"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "Server $x does not exist for region $a and environment $b"
+                                    }
+                                }
+                                    else {
+                                       if ("$b" == "Dev"){
+                                            serverX = serverX.replace("y","9")
+                                        }
+                                        else if ("$b" == "Test"){
+                                            serverX = serverX.replace("y", "8")
+                                        }
+                                        else if ("$b" == "Prod"){
+                                            serverX = serverX.replace("y", "1")
+                                        }
+                                                                                
+                                        // Output each server to console with line for spacing
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "The script execution in this block updates TNSNames files in the $b $a environment on the $serverX server."
+                                        // Where the script will be executed
+                                        // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
+                                        node(label: "Dev") {
+                                            // Checkout scripts from remote repo and download to Jenkins master 
+                                            git (
+                                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
+                                                branch: 'master'])
+                                            // Execute script on servers
+                                            script {
+                                                if ("${params.application}" == "Planning Analytics"){
+                                                    echo "call PA script"
+                                                }
+                                                else {// this is Cognos
+                                                    powershell(". '.\\tnsnames.ps1'; tnsnames -server $serverX")
+                                                } 
+                                            }
+                                        } 
+                            
+                                    }
 
-                        echo "The script being executed next is ${params.script} in the ${params.environment} on the $x server."
-                        // Where the script will be executed
-                        node(label: "$x") {
-                            // Checkout scripts from remote repo and download to Jenkins master 
-                            git (
-                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                branch: 'master'])
-                            // Execute script on servers
-                            script {
-                                //powershell(". '.\\SearchError.ps1'")
-                                //powershell("dir")
-                                powershell("Copy-Item -Path C:\\Jenkins\\workspace\\Cognos\\TNSNames-Change\\tnsnames.txt -Destination C:\\copy -Recurse")
                             }
-                        } 
+                        }
                     }
                 }
             }
         }
     }
-}
+}   
 
 
 
