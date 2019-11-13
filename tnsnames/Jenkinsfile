@@ -89,7 +89,7 @@ pipeline {
                 }
                 // Output parameters selected at time of build to Jenkins console
                 echo '------------------------------------------------------------------------------------------------------------------'
-                echo "Checking tool input... user selected: ${params.tool}"
+                echo "Checking tool input... user selected: ${params.application}"
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking region input... user selected: ${params.region}"
                 echo "Checking server input(s)... user selected: ${params.server}"
