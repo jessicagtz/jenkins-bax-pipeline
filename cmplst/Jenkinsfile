@@ -1,0 +1,167 @@
+/*properties([
+    parameters([
+        choice(name: 'tool',
+        choices: '\nCognos\nPlanningAnalytics',
+        description: 'Select tool:'),
+
+        [$class: 'ChoiceParameter', 
+            choiceType: 'PT_MULTI_SELECT', 
+            description: 'Select the Env Name from the Dropdown List', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'environment', 
+            randomName: 'choice-parameter-5631314439613978', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Env\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return["Dev","Test","Prod"]'
+                ]
+            ]
+        ], 
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_MULTI_SELECT', 
+            description: 'Select the Server from the Dropdown List', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'server', 
+            randomName: 'choice-parameter-5631314456178619', 
+            referencedParameters: 'environment', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' if (environment.equals("Dev")){
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                            }
+                            else if(environment.equals("Test")){
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                            }
+                            else if(environment.equals("Prod")){
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                            }
+                        '''
+                ]
+            ]
+        ],
+
+        choice(name: 'script',
+        choices: 'ImageUpload',
+        description: 'Select script:'),
+
+        choice(name: 'services',
+        choices: 'DISP\nWEB',
+        description: 'Select service:'),
+        
+    ])
+])*/
+
+// Create string array of input from servers
+def String[] serverGroup = "${params.server}".split(',');
+def String[] environmentGroup = "${params.environment}".split(',')
+def String[] regionGroup = "${params.region}".split(',')
+
+// Create the pipeline
+pipeline {
+    // Allows pipeline to be run on any available agent
+    agent any
+    // Stages in build pipeline
+    stages {
+        // First stage in pipeline: review inputs and output to Jenkins console
+        stage ('Parameter Validation') {
+        // Steps in Parameter Validation stage
+            steps {
+                script {
+                    // If any parameter is blank, the build will fail
+                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
+                // Output parameters selected at time of build to Jenkins console
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking tool input... user selected: ${params.application}"
+                echo "Checking environment input... user selected: ${params.environment}"
+                echo "Checking region input... user selected: ${params.region}"
+                echo "Checking server input(s)... user selected: ${params.server}"
+                echo '------------------------------------------------------------------------------------------------------------------'
+            }
+        }
+        // Second stage in pipeline: download script and execute on in-scope servers
+        stage ('Execute Script') {
+            steps {
+                script {
+                    for (a in regionGroup) {
+                        for (b in environmentGroup) {
+                            // For Loop to utilize the serverGroup array 
+                            for (x in serverGroup) {
+                                def String serverX = ""
+                                serverX = "$x".replace("x", "$a")
+                                
+                                if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
+                                    if ("$a" != "USOH"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "Server $serverX does not exist for region $a\n"
+                                    }
+                                    else if ("$b" != "Prod"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "Server $serverX does not exist for region $a and environment $b\n"
+                                    }
+                                }
+                                    else {
+                                       if ("$b" == "Dev"){
+                                            serverX = serverX.replace("y","9")
+                                        }
+                                        else if ("$b" == "Test"){
+                                            serverX = serverX.replace("y", "8")
+                                        }
+                                        else if ("$b" == "Prod"){
+                                            serverX = serverX.replace("y", "1")
+                                        }
+                                                                                
+                                        // Output each server to console with line for spacing
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
+                                        // Where the script will be executed
+                                        // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
+                                        /*node(label: "Dev") {
+                                            // Checkout scripts from remote repo and download to Jenkins master 
+                                            git (
+                                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
+                                                branch: 'master'])
+                                            // Execute script on servers
+                                            script {
+                                                if ("${params.application}" == "Planning Analytics"){
+                                                    echo "call PA script"
+                                                }
+                                                else {// this is Cognos
+                                                    powershell(". '.\\imageupload.ps1'; imageupload -server $serverX")
+                                                } 
+                                            }
+                                        } */
+                            
+                                    }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}   
