@@ -151,7 +151,7 @@ pipeline {
                                             // Change directory to NetApp file share and copy script to Jenkins workspace
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
-                                                cd \\Aministration\\Scripts
+                                                cd \\Administration\\Scripts
                                                 copy CMPLST_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST
                                                 """
                                             // Execute Powershell script
