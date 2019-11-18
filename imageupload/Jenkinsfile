@@ -1,4 +1,4 @@
-/*roperties([
+/*properties([
     parameters([
         choice(name: 'tool',
         choices: '\nCognos\nPlanningAnalytics',
@@ -139,11 +139,14 @@ pipeline {
                                         echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
                                         // Where the script will be executed
                                         // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
-                                        /*node(label: "Dev") {
-                                            // Checkout scripts from remote repo and download to Jenkins master 
-                                            git (
-                                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                                branch: 'master'])
+                                        node(label: "DEFRCOGAPP901") {
+                                            // Change directory to NetApp file share and execute script
+                                            bat """
+                                                pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                                cd \\Aministration\\Scripts
+                                                Powershell.exe -File .\\powershellfilenamehere
+                                                """
+                                            
                                             // Execute script on servers
                                             script {
                                                 if ("${params.application}" == "Planning Analytics"){
