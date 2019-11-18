@@ -1,7 +1,11 @@
-properties([
+/*properties([
     parameters([
+        choice(name: 'tool',
+        choices: '\nCognos\nPlanningAnalytics',
+        description: 'Select tool:'),
+
         [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
+            choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Env Name from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
@@ -24,7 +28,7 @@ properties([
             ]
         ], 
         [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
+            choiceType: 'PT_MULTI_SELECT', 
             description: 'Select the Server from the Dropdown List', 
             filterLength: 1, 
             filterable: false, 
@@ -44,155 +48,120 @@ properties([
                     sandbox: false, 
                     script: 
                         ''' if (environment.equals("Dev")){
-                                return["Dev1","Dev2","Dev3"]
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
                             }
                             else if(environment.equals("Test")){
-                                return["Test1","Test2","Test3"]
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
                             }
                             else if(environment.equals("Prod")){
-                                return["Prod1","Prod2","Prod3"]
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
                             }
                         '''
                 ]
             ]
         ],
+
         choice(name: 'script',
-        choices: 'DumpFileCleanup',
+        choices: 'ImageUpload',
         description: 'Select script:'),
 
-        string(name: 'SourcePath', description: 'File(s) you want to remove:'),
-        string(name: 'OutputSummary', description: 'Path to place review:')
+        choice(name: 'services',
+        choices: 'DISP\nWEB',
+        description: 'Select service:'),
+        
     ])
-])
+])*/
 
+/**************** Variable Definition ****************/
+// Create string array of servers based on user input
+def String[] serverGroup = "${params.server}".split(',');
+
+// Create string array of environments based on user input
+def String[] environmentGroup = "${params.environment}".split(',')
+
+// Create string array of regions based on user input
+def String[] regionGroup = "${params.region}".split(',')
+
+/**************** Pipeline Definition ****************/
 pipeline {
+    // Allows pipeline to run on any available node if not explicitly defined 
     agent any
-    // stages in build pipeline
+    // Create separate stages in build pipeline
     stages {
-        //first stage
+        // Define first stage in pipeline: review user inputs and output to Jenkins console
         stage ('Parameter Validation') {
-        //steps in test stage
+        // Define steps in the 'Parameter Validation' stage
             steps {
-                echo 'Checking environment input:'
-                echo "Selected: ${params.environment}"
-                echo 'Checking server input:'
-                echo "Selected: ${params.server}"
-                echo 'Checking script input'
-                echo "Selected: ${params.script}"
-                echo 'Checking username input:'
-                echo "Selected: ${params.WindowsUser}"
-                echo 'Checking password:'
-                echo "Selected: ${params.WindowsPassword}"
+                script {
+                    // Error handling
+                    // If any parameter is left blank, the build will automatically fail
+                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
+                // Output parameters selected at time of build to Jenkins console
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking tool input... user selected: ${params.application}"
+                echo "Checking environment input... user selected: ${params.environment}"
+                echo "Checking region input... user selected: ${params.region}"
+                echo "Checking server input(s)... user selected: ${params.server}"
+                echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
+        // Define second stage in pipeline: access NetApp and 
         stage ('Execute Script') {
             steps {
                 script {
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
+                    for (a in regionGroup) {
+                        for (b in environmentGroup) {
+                            // For Loop to utilize the serverGroup array 
+                            for (x in serverGroup) {
+                                def String serverX = ""
+                                serverX = "$x".replace("x", "$a")
+                                
+                                if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
+                                    if ("$a" != "USOH"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "Server $serverX does not exist for region $a\n"
+                                    }
+                                    else if ("$b" != "Prod"){
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "Server $serverX does not exist for region $a and environment $b\n"
+                                    }
+                                } else {
+                                    if ("$b" == "Dev"){
+                                        serverX = serverX.replace("y","9")
+                                    }
+                                    else if ("$b" == "Test"){
+                                        serverX = serverX.replace("y", "8")
+                                    }
+                                    else if ("$b" == "Prod"){
+                                        serverX = serverX.replace("y", "1")
+                                    }
+                                                                            
+                                    // Output each server to console with line for spacing
+                                    echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                    echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
+                                    // Where the script will be executed
+                                    // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
+                                    node(label: "DEFRCOGAPP901") {
+                                        if ("${params.application}" == "Planning Analytics"){
+                                            echo "call PA script"
+                                        } else {
+                                            // Change directory to NetApp file share and execute script
+                                            bat """
+                                                pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                                cd \\Aministration\\Scripts
+                                                Powershell.exe -File .\\LogZipper_Test.ps1 -environment ${params.environment} -region ${params.region} -server ${params.server}
+                                                """
+                                        }
+                                    } 
                                 }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Dev' && "${params.server}" == 'Dev3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Dev') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    } 
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                //git (
-                                    //[url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    //branch: 'master'])
-                                //script {
-                                    //powershell(". '.\\DeleteFiles.ps1'")
-                                //}
-                                zip zipFile: 'Test.zip', dir:'C:\\zipme'
-                            } 
-                    }
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Test' && "${params.server}" == 'Test3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Test') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }    
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod1') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod2') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
-                    }
-                    if ("${params.environment}" == 'Prod' && "${params.server}" == 'Prod3') {
-                            echo "The script being executed next is ${params.script} in the ${params.environment} on the ${params.server} server."
-                            node(label: 'Prod') {
-                                git (
-                                    [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                    branch: 'master'])
-                                script {
-                                    powershell(". '.\\DeleteFiles.ps1'")
-                                }
-                            } 
+                            }
+                        }
                     }
                 }
             }
         }
     }
-}
-
-
-
+}   
