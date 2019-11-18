@@ -1,0 +1,73 @@
+properties([
+    parameters([
+        choice(name: 'tool',
+        choices: '\nCognos\nPlanningAnalytics',
+        description: 'Select tool:'),
+
+        [$class: 'ChoiceParameter', 
+            choiceType: 'PT_MULTI_SELECT', 
+            description: 'Select the Env Name from the Dropdown List', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'environment', 
+            randomName: 'choice-parameter-5631314439613978', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Env\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return["Dev","Test","Prod"]'
+                ]
+            ]
+        ], 
+        [$class: 'CascadeChoiceParameter', 
+            choiceType: 'PT_MULTI_SELECT', 
+            description: 'Select the Server from the Dropdown List', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'server', 
+            randomName: 'choice-parameter-5631314456178619', 
+            referencedParameters: 'environment', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        'return[\'Could not get Environment from Env Param\']'
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        ''' if (environment.equals("Dev")){
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                            }
+                            else if(environment.equals("Test")){
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                            }
+                            else if(environment.equals("Prod")){
+                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
+                            }
+                        '''
+                ]
+            ]
+        ],
+
+        choice(name: 'script',
+        choices: 'ImageUpload',
+        description: 'Select script:'),
+
+        choice(name: 'services',
+        choices: 'DISP\nWEB',
+        description: 'Select service:'),
+        
+    ])
+])
