@@ -139,21 +139,27 @@ pipeline {
                                         serverX = serverX.replace("y", "1")
                                     }
                                                                             
-                                    // Output each server to console with line for spacing
+                                    // Two echos: one for spacing in the log and the other to detail what will occur in each block 
                                     echo "$serverX --------------------------------------------------------------------------------------------------\n"
                                     echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
-                                    // Where the script will be executed
-                                    // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
-                                    node(label: "DEFRCOGAPP901") {
+
+                                    // Node label determines where the script will execute
+                                    node(label: "$serverX") {
+                                        // Cutoff for Planning Analytics selection until scripts are added in the future
                                         if ("${params.application}" == "Planning Analytics"){
                                             echo "call PA script"
                                         } else {
-                                            // Change directory to NetApp file share and execute script
+                                            // Change directory to NetApp file share and copy script to Jenkins workspace
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                                 cd \\Aministration\\Scripts
-                                                Powershell.exe -File .\\LogZipper_Test.ps1 -environment ${params.environment} -region ${params.region} -server ${params.server}
+                                                copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip
+                                                copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip@2
                                                 """
+                                            // Execute Powershell script
+                                            script {
+                                                powershell(". '.\\LogZipper_test.ps1'; LogZipper -env ${params.environment} -region ${params.region} -server $serverX")
+                                            }
                                         }
                                     } 
                                 }

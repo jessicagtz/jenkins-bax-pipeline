@@ -72,23 +72,29 @@
     ])
 ])*/
 
-// Create string array of input from servers
+/**************** Variable Definition ****************/
+// Create string array of servers based on user input
 def String[] serverGroup = "${params.server}".split(',');
+
+// Create string array of environments based on user input
 def String[] environmentGroup = "${params.environment}".split(',')
+
+// Create string array of regions based on user input
 def String[] regionGroup = "${params.region}".split(',')
 
-// Create the pipeline
+/**************** Pipeline Definition ****************/
 pipeline {
-    // Allows pipeline to be run on any available agent
+    // Allows pipeline to run on any available node if not explicitly defined 
     agent any
-    // Stages in build pipeline
+    // Create separate stages in build pipeline
     stages {
-        // First stage in pipeline: review inputs and output to Jenkins console
+        // Define first stage in pipeline: review user inputs and output to Jenkins console
         stage ('Parameter Validation') {
-        // Steps in Parameter Validation stage
+        // Define steps in the 'Parameter Validation' stage
             steps {
                 script {
-                    // If any parameter is blank, the build will fail
+                    // Error handling
+                    // If any parameter is left blank, the build will automatically fail
                     if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
@@ -102,7 +108,7 @@ pipeline {
                 echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
-        // Second stage in pipeline: download script and execute on in-scope servers
+        // Define second stage in pipeline: access NetApp and 
         stage ('Execute Script') {
             steps {
                 script {
@@ -122,41 +128,39 @@ pipeline {
                                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
                                         echo "Server $serverX does not exist for region $a and environment $b\n"
                                     }
-                                }
-                                    else {
-                                       if ("$b" == "Dev"){
-                                            serverX = serverX.replace("y","9")
-                                        }
-                                        else if ("$b" == "Test"){
-                                            serverX = serverX.replace("y", "8")
-                                        }
-                                        else if ("$b" == "Prod"){
-                                            serverX = serverX.replace("y", "1")
-                                        }
-                                                                                
-                                        // Output each server to console with line for spacing
-                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                                        echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
-                                        // Where the script will be executed
-                                        // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
-                                        /*node(label: "Dev") {
-                                            // Checkout scripts from remote repo and download to Jenkins master 
-                                            git (
-                                                [url: 'https://github.com/tylersul/jenkins-bax.git', 
-                                                branch: 'master'])
-                                            // Execute script on servers
-                                            script {
-                                                if ("${params.application}" == "Planning Analytics"){
-                                                    echo "call PA script"
-                                                }
-                                                else {// this is Cognos
-                                                    powershell(". '.\\imageupload.ps1'; imageupload -server $serverX")
-                                                } 
-                                            }
-                                        } */
-                            
+                                } else {
+                                    if ("$b" == "Dev"){
+                                        serverX = serverX.replace("y","9")
                                     }
-
+                                    else if ("$b" == "Test"){
+                                        serverX = serverX.replace("y", "8")
+                                    }
+                                    else if ("$b" == "Prod"){
+                                        serverX = serverX.replace("y", "1")
+                                    }
+                                                                            
+                                    // Output each server to console with line for spacing
+                                    echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                    echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
+                                    // Where the script will be executed
+                                    // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
+                                    node(label: "DEFRCOGAPP902") {
+                                        if ("${params.application}" == "Planning Analytics"){
+                                            echo "call PA script"
+                                        } else {
+                                            // Change directory to NetApp file share and copy script to Jenkins workspace
+                                            bat """
+                                                pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                                cd \\Aministration\\Scripts
+                                                copy CMPLST_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST
+                                                """
+                                            // Execute Powershell script
+                                            script {
+                                                powershell(". '.\\CMPLST_Test.ps1'; CMPLST -env ${params.environment} -region ${params.region} -server $serverX")
+                                            }
+                                        }
+                                    } 
+                                }
                             }
                         }
                     }
