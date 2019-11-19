@@ -80,7 +80,7 @@ pipeline {
                                                                             
                                     // Two echos: one for spacing in the log and the other to detail what will occur in each block 
                                     echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                                    echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
+                                    echo "The script execution in this block will upload zip files in the $b $a environment on the $serverX server."
 
                                     // Node label determines where the script will execute
                                     node(label: "$serverX") {
