@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     // Error handling - if any parameter is left blank, the build will automatically fail
-                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '' || "${params.ErrorCode}" == '') {
+                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '' || "${params.project_code}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
@@ -30,7 +30,7 @@ pipeline {
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking region input... user selected: ${params.region}"
                 echo "Checking server input(s)... user selected: ${params.server}"
-                echo "Checking server input(s)... user selected: ${params.ErrorCode}"
+                echo "Checking server input(s)... user selected: ${params.project_code}"
                 echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
