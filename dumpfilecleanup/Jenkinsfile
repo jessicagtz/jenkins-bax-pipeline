@@ -19,8 +19,7 @@ pipeline {
         // Define steps in the 'Parameter Validation' stage
             steps {
                 script {
-                    // Error handling
-                    // If any parameter is left blank, the build will automatically fail
+                    // Error handling - if any parameter is left blank, the build will automatically fail
                     if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
@@ -34,17 +33,30 @@ pipeline {
                 echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
-        // Define second stage in pipeline: access NetApp and 
+// Define second stage in pipeline: access NetApp and download file to local workspace
         stage ('Execute Script') {
+
+            // Define steps in the 'Execute Script Stage'
             steps {
+
+                // Script block to encapsulate three nested loops
                 script {
+
+                    // Loop through regions in the regionGroup String Array
                     for (a in regionGroup) {
+
+                        // Loop through regions in the environmentGroup String Array
                         for (b in environmentGroup) {
-                            // For Loop to utilize the serverGroup array 
+
+                            // Loop through regions in the serverGroup String Array
                             for (x in serverGroup) {
+                                // Create temporary variable as empty string
                                 def String serverX = ""
+
+                                // Replace the 'x' in the server name with the region code
                                 serverX = "$x".replace("x", "$a")
                                 
+                                // If the server name contains either of the two values, skip to next server and output reason
                                 if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
                                     if ("$a" != "USOH"){
                                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
@@ -54,6 +66,7 @@ pipeline {
                                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
                                         echo "Server $serverX does not exist for region $a and environment $b\n"
                                     }
+                                // Replace 'y' with corresponding environment code
                                 } else {
                                     if ("$b" == "Dev"){
                                         serverX = serverX.replace("y","9")
@@ -67,7 +80,7 @@ pipeline {
                                                                             
                                     // Two echos: one for spacing in the log and the other to detail what will occur in each block 
                                     echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                                    echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
+                                    echo "The script execution in this block will delete dump files in the $b $a environment on the $serverX server."
 
                                     // Node label determines where the script will execute
                                     node(label: "$serverX") {
@@ -75,12 +88,12 @@ pipeline {
                                         if ("${params.application}" == "Planning Analytics"){
                                             echo "call PA script"
                                         } else {
-                                            // Change directory to NetApp file share and copy script to Jenkins workspace
+                                            // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                                 cd \\Aministration\\Scripts
-                                                copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip
-                                                copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip@2
+                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Dump-File-Cleanup
+                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Dump-File-Cleanup@2
                                                 """
                                             // Execute Powershell script
                                             script {
