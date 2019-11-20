@@ -1,6 +1,6 @@
 /**************** Variable Definition ****************/
 // Create string array of servers based on user input
-def String[] idGroup = "${params.server}".split(',');
+def String[] idGroup = "${params.id}".split(',');
 
 /**************** Pipeline Definition ****************/
 pipeline {
@@ -14,18 +14,17 @@ pipeline {
             steps {
                 script {
                     // Error handling - if any parameter is left blank, the build will automatically fail
-                    if ("${params.application}" == '' || "${params.region}" == '' || "${params.project_code}" == '' || "${params.group}" == '' || "${params.action}"" == '' || ${params.id}" == '') {
+                    if ("${params.region}" == '' || "${params.project_code}" == '' || "${params.group}" == '' || "${params.action}" == '' || "${params.id}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
                 // Output parameters selected at time of build to Jenkins console
                 echo '------------------------------------------------------------------------------------------------------------------'
-                echo "Checking tool input... user selected: ${params.application}"
                 echo "Checking environment input... user selected: ${params.region}"
                 echo "Checking region input... user selected: ${params.project_code}"
-                echo "Checking server input(s)... user selected: ${params.group}"
-                echo "Checking server input(s)... user selected: ${params.action}"
-                echo "Checking server input(s)... user selected: ${params.id}"
+                echo "Checking group input(s)... user selected: ${params.group}"
+                echo "Checking action input(s)... user selected: ${params.action}"
+                echo "Checking id input(s)... user selected: ${params.id}"
                 echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
@@ -43,7 +42,7 @@ pipeline {
                                                                             
                         // Two echos: one for spacing in the log and the other to detail what will occur in each block 
                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                        echo "The script execution in this block will delete dump files in the $b $a environment on the $serverX server."
+                        echo "The script execution in this block will delete dump files in the environment on the $x server."
 
                         // Node label determines where the script will execute
                         node(label: "DEFRCOGAPP901") {
@@ -60,7 +59,7 @@ pipeline {
                                     """
                                 // Execute Powershell script
                                 script {
-                                    powershell(". '.\\AccessChange_Test.ps1'; -region ${params.region}  -ProjectCode ${params.project_code} -Group ${params.group} -AddRemove ${params.action} -id  ${params.id}")
+                                    powershell(". '.\\AccessChange.ps1 -region ${params.region}  -ProjectCode ${params.project_code} -Group ${params.group} -AddRemove ${params.action} -User_id  $x'")
                                 }
                             }
                         } 

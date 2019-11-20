@@ -1,0 +1,119 @@
+/**************** Variable Definition ****************/
+// Create string array of servers based on user input
+def String[] serverGroup = "${params.server}".split(',');
+
+// Create string array of environments based on user input
+def String[] environmentGroup = "${params.environment}".split(',')
+
+// Create string array of regions based on user input
+def String[] regionGroup = "${params.region}".split(',')
+
+// Create string array of services based on user input
+def String[] serviceGroup = "${params.service}".split(',')
+
+/**************** Pipeline Definition ****************/
+pipeline {
+    // Allows pipeline to run on any available node if not explicitly defined 
+    agent any
+    // Create separate stages in build pipeline
+    stages {
+        // Define first stage in pipeline: review user inputs and output to Jenkins console
+        stage ('Parameter Validation') {
+        // Define steps in the 'Parameter Validation' stage
+            steps {
+                script {
+                    // Error handling - if any parameter is left blank, the build will automatically fail
+                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
+                // Output parameters selected at time of build to Jenkins console
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking tool input... user selected: ${params.application}"
+                echo "Checking environment input... user selected: ${params.environment}"
+                echo "Checking region input... user selected: ${params.region}"
+                echo "Checking server input(s)... user selected: ${params.server}"
+                echo '------------------------------------------------------------------------------------------------------------------'
+            }
+        }
+        // Define second stage in pipeline: access NetApp and download file to local workspace
+        stage ('Execute Script') {
+
+            // Define steps in the 'Execute Script Stage'
+            steps {
+
+                // Script block to encapsulate three nested loops
+                script {
+
+                    // Loop through regions in the regionGroup String Array
+                    for (a in regionGroup) {
+
+                        // Loop through regions in the environmentGroup String Array
+                        for (b in environmentGroup) {
+
+                            // Loop through regions in the serverGroup String Array
+                            for (x in serverGroup) {
+
+                                // Loop through services in the serviceGroup String Array
+                                for (y in serviceGroup) {
+                                    // Create temporary variable as empty string
+                                    def String serverX = ""
+
+                                    // Replace the 'x' in the server name with the region code
+                                    serverX = "$x".replace("x", "$a")
+                                    
+                                    // If the server name contains either of the two values, skip to next server and output reason
+                                    if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
+                                        if ("$a" != "USOH"){
+                                            echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                            echo "Server $serverX does not exist for region $a\n"
+                                        }
+                                        else if ("$b" != "Prod"){
+                                            echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                            echo "Server $serverX does not exist for region $a and environment $b\n"
+                                        }
+                                    // Replace 'y' with corresponding environment code
+                                    } else {
+                                        if ("$b" == "Dev"){
+                                            serverX = serverX.replace("y","9")
+                                        }
+                                        else if ("$b" == "Test"){
+                                            serverX = serverX.replace("y", "8")
+                                        }
+                                        else if ("$b" == "Prod"){
+                                            serverX = serverX.replace("y", "1")
+                                        }
+                                                                                
+                                        // Two echos: one for spacing in the log and the other to detail what will occur in each block 
+                                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
+                                        echo "The script execution in this block is for $y service in the $b $a environment on the $serverX server."
+
+                                        // Node label determines where the script will execute
+                                        node(label: "$serverX") {
+                                            // Cutoff for Planning Analytics selection until scripts are added in the future
+                                            if ("${params.application}" == "Planning Analytics"){
+                                                echo "call PA script"
+                                            } else {
+                                                // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
+                                                bat """
+                                                    pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                                    cd \\Administration\\Scripts
+                                                    copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip
+                                                    copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip@2
+                                                    """
+                                                // Execute Powershell script
+                                                script {
+                                                    powershell(". '.\\LogZipper_test.ps1'; LogZipper -env ${params.environment} -region ${params.region} -server $serverX")
+                                                }
+                                            }
+                                        } 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}   
