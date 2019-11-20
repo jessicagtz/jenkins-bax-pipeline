@@ -9,7 +9,7 @@ def String[] environmentGroup = "${params.environment}".split(',')
 def String[] regionGroup = "${params.region}".split(',')
 
 // Create string array of services based on user input
-def String[] serviceGroup = "${params.service}".split(',')
+def String[] serviceGroup = "${params.services}".split(',')
 
 /**************** Pipeline Definition ****************/
 pipeline {
@@ -98,12 +98,12 @@ pipeline {
                                                 bat """
                                                     pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                                     cd \\Administration\\Scripts
-                                                    copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip
-                                                    copy LogZipper_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Log-Zip@2
+                                                    copy DriverFiles.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Driver-Push
+                                                    copy DriverFiles.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Driver-Push@2
                                                     """
                                                 // Execute Powershell script
                                                 script {
-                                                    powershell(". '.\\LogZipper_test.ps1'; LogZipper -env ${params.environment} -region ${params.region} -server $serverX")
+                                                    powershell(". '.\\DriverFiles.ps1'; DriverFiles -env ${params.environment} -region ${params.region} -server $serverX -services $y")
                                                 }
                                             }
                                         } 
