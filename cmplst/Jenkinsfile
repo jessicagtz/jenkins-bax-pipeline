@@ -91,12 +91,12 @@ pipeline {
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                                 cd \\Administration\\Scripts
-                                                copy CMPLST.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST
-                                                copy .ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST@2
+                                                copy CMPLST.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\CMPLST
+                                                copy CMPLST.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\CMPLST@2
                                                 """
                                             // Execute Powershell script
                                             script {
-                                                powershell(". 'CMPLST.\\.ps1'; CMPLST -env ${params.environment} -region ${params.region} -server $serverX")
+                                                powershell(". '.\\CMPLST.ps1'; CMPLST -env ${params.environment} -region ${params.region} -server $serverX")
                                             }
                                         }
                                     } 
