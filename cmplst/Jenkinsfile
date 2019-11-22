@@ -1,77 +1,3 @@
-/*properties([
-    parameters([
-        choice(name: 'tool',
-        choices: '\nCognos\nPlanningAnalytics',
-        description: 'Select tool:'),
-
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the Env Name from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'environment', 
-            randomName: 'choice-parameter-5631314439613978', 
-            script: [
-                $class: 'GroovyScript', 
-                fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return[\'Could not get Env\']'
-                ], 
-                script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return["Dev","Test","Prod"]'
-                ]
-            ]
-        ], 
-        [$class: 'CascadeChoiceParameter', 
-            choiceType: 'PT_MULTI_SELECT', 
-            description: 'Select the Server from the Dropdown List', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'server', 
-            randomName: 'choice-parameter-5631314456178619', 
-            referencedParameters: 'environment', 
-            script: [
-                $class: 'GroovyScript', 
-                fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        'return[\'Could not get Environment from Env Param\']'
-                ], 
-                script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        ''' if (environment.equals("Dev")){
-                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
-                            }
-                            else if(environment.equals("Test")){
-                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
-                            }
-                            else if(environment.equals("Prod")){
-                                return["USOHCOGAPP901","APSGCOGAPP901","DEFRCOGAPP902"]
-                            }
-                        '''
-                ]
-            ]
-        ],
-
-        choice(name: 'script',
-        choices: 'ImageUpload',
-        description: 'Select script:'),
-
-        choice(name: 'services',
-        choices: 'DISP\nWEB',
-        description: 'Select service:'),
-        
-    ])
-])*/
-
 /**************** Variable Definition ****************/
 // Create string array of servers based on user input
 def String[] serverGroup = "${params.server}".split(',');
@@ -93,32 +19,43 @@ pipeline {
         // Define steps in the 'Parameter Validation' stage
             steps {
                 script {
-                    // Error handling
-                    // If any parameter is left blank, the build will automatically fail
-                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                    // Error handling - if any parameter is left blank, the build will automatically fail
+                    if ("${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
                 // Output parameters selected at time of build to Jenkins console
                 echo '------------------------------------------------------------------------------------------------------------------'
-                echo "Checking tool input... user selected: ${params.application}"
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking region input... user selected: ${params.region}"
                 echo "Checking server input(s)... user selected: ${params.server}"
                 echo '------------------------------------------------------------------------------------------------------------------'
             }
         }
-        // Define second stage in pipeline: access NetApp and 
+        // Define second stage in pipeline: access NetApp and download file to local workspace
         stage ('Execute Script') {
+
+            // Define steps in the 'Execute Script Stage'
             steps {
+
+                // Script block to encapsulate three nested loops
                 script {
+
+                    // Loop through regions in the regionGroup String Array
                     for (a in regionGroup) {
+
+                        // Loop through regions in the environmentGroup String Array
                         for (b in environmentGroup) {
-                            // For Loop to utilize the serverGroup array 
+
+                            // Loop through regions in the serverGroup String Array
                             for (x in serverGroup) {
+                                // Create temporary variable as empty string
                                 def String serverX = ""
+
+                                // Replace the 'x' in the server name with the region code
                                 serverX = "$x".replace("x", "$a")
                                 
+                                // If the server name contains either of the two values, skip to next server and output reason
                                 if ("$x".contains("COGWEB") || "$x".contains("COGCM")){
                                     if ("$a" != "USOH"){
                                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
@@ -128,6 +65,7 @@ pipeline {
                                         echo "$serverX --------------------------------------------------------------------------------------------------\n"
                                         echo "Server $serverX does not exist for region $a and environment $b\n"
                                     }
+                                // Replace 'y' with corresponding environment code
                                 } else {
                                     if ("$b" == "Dev"){
                                         serverX = serverX.replace("y","9")
@@ -139,24 +77,26 @@ pipeline {
                                         serverX = serverX.replace("y", "1")
                                     }
                                                                             
-                                    // Output each server to console with line for spacing
+                                    // Two echos: one for spacing in the log and the other to detail what will occur in each block 
                                     echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                                    echo "The script execution in this block will upload new images in the $b $a environment on the $serverX server."
-                                    // Where the script will be executed
-                                    // THIS NODE LABEL NEEDS TO BE CHANGED ONCE THE JENKINS SLAVE SERVER NAMES LINE UP TO CONFIG FILE
-                                    node(label: "DEFRCOGAPP902") {
+                                    echo "The script execution in this block will copy CMPLST files to the NetApp file share from the $b $a environment on the $serverX server."
+
+                                    // Node label determines where the script will execute
+                                    node(label: "$serverX") {
+                                        // Cutoff for Planning Analytics selection until scripts are added in the future
                                         if ("${params.application}" == "Planning Analytics"){
                                             echo "call PA script"
                                         } else {
-                                            // Change directory to NetApp file share and copy script to Jenkins workspace
+                                            // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                                 cd \\Administration\\Scripts
-                                                copy CMPLST_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST
+                                                copy CMPLST.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST
+                                                copy .ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\CMPLST@2
                                                 """
                                             // Execute Powershell script
                                             script {
-                                                powershell(". '.\\CMPLST_Test.ps1'; CMPLST -env ${params.environment} -region ${params.region} -server $serverX")
+                                                powershell(". 'CMPLST.\\.ps1'; CMPLST -env ${params.environment} -region ${params.region} -server $serverX")
                                             }
                                         }
                                     } 
