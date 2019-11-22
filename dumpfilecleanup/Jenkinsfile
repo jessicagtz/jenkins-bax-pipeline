@@ -91,12 +91,12 @@ pipeline {
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                                 cd \\Administration\\Scripts
-                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Dump-File-Cleanup
-                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Dump-File-Cleanup@2
+                                                copy DumpFile.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Dump-File-Cleanup
+                                                copy DumpFile.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Dump-File-Cleanup@2
                                                 """
                                             // Execute Powershell script
                                             script {
-                                                powershell(". '.\\DumpFile_Test.ps1'; DumpCleanup -server $serverX")
+                                                powershell(". '.\\DumpFile.ps1'; DumpCleanup -server $serverX")
                                             }
                                         }
                                     } 
