@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     // Error handling - if any parameter is left blank, the build will automatically fail
-                    if ("${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '' || "${params.services}") {
+                    if ("${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '' || "${params.services} == ''") {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }

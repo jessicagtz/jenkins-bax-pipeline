@@ -20,13 +20,12 @@ pipeline {
             steps {
                 script {
                     // Error handling - if any parameter is left blank, the build will automatically fail
-                    if ("${params.application}" == '' || "${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
+                    if ("${params.environment}" == '' || "${params.region}" == '' || "${params.server}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
                 // Output parameters selected at time of build to Jenkins console
                 echo '------------------------------------------------------------------------------------------------------------------'
-                echo "Checking tool input... user selected: ${params.application}"
                 echo "Checking environment input... user selected: ${params.environment}"
                 echo "Checking region input... user selected: ${params.region}"
                 echo "Checking server input(s)... user selected: ${params.server}"
@@ -91,9 +90,9 @@ pipeline {
                                             // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
-                                                cd \\Aministration\\Scripts
-                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Dump-File-Cleanup
-                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Dump-File-Cleanup@2
+                                                cd \\Administration\\Scripts
+                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Dump-File-Cleanup
+                                                copy DumpFile_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Dump-File-Cleanup@2
                                                 """
                                             // Execute Powershell script
                                             script {
