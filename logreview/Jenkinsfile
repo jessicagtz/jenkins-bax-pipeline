@@ -47,9 +47,18 @@ pipeline {
 
                         // Loop through regions in the environmentGroup String Array
                         for (b in environmentGroup) {
+                            bat """
+                            pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                            cd \\Administration\\Scripts
+                            copy LogErrors.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Log-Error-Review
+                            copy LogErrors.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Log-Error-Review@2
+                            """
 
+                            script {
+                                powershell(". '.\\LogErrors.ps1'; DeleteNetAppLogs -env ${params.environment} -region ${params.region}")
+                            }
                             // Loop through regions in the serverGroup String Array
-                            for (x in serverGroup) {
+                            /*for (x in serverGroup) {
                                 // Create temporary variable as empty string
                                 def String serverX = ""
 
@@ -91,9 +100,9 @@ pipeline {
                                             // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
                                             bat """
                                                 pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
-                                                cd \\Aministration\\Scripts
-                                                copy LogErrors.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Log-Review
-                                                copy LogErrors.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Log-Review@2
+                                                cd \\Administration\\Scripts
+                                                copy LogErrors.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Log-Error-Review
+                                                copy LogErrors.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Log-Error-Review@2
                                                 """
                                             // Execute Powershell script
                                             script {
@@ -102,7 +111,7 @@ pipeline {
                                         }
                                     } 
                                 }
-                            }
+                            }*/
                         }
                     }
                 }
