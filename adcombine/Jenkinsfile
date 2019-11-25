@@ -1,0 +1,62 @@
+/**************** Variable Definition ****************/
+// Create string array of regions based on user input
+def String[] regionGroup = "${params.region}".split(',')
+
+/**************** Pipeline Definition ****************/
+pipeline {
+    // Allows pipeline to run on any available node if not explicitly defined 
+    agent any
+    // Create separate stages in build pipeline
+    stages {
+        // Define first stage in pipeline: review user inputs and output to Jenkins console
+        stage ('Parameter Validation') {
+        // Define steps in the 'Parameter Validation' stage
+            steps {
+                script {
+                    // Error handling - if any parameter is left blank, the build will automatically fail
+                    if (| "${params.region}" == '' || "${params.project_code}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
+                // Output parameters selected at time of build to Jenkins console
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking region input... user selected: ${params.region}"
+                echo "Checking server input(s)... user selected: ${params.project_code}"
+                echo '------------------------------------------------------------------------------------------------------------------'
+            }
+        }
+        // Define second stage in pipeline: access NetApp and download file to local workspace
+        stage ('Execute Script') {
+
+            // Define steps in the 'Execute Script Stage'
+            steps {
+
+                // Script block to encapsulate three nested loops
+                script {
+
+                    // Loop through regions in the regionGroup String Array
+                    for (a in regionGroup) {                                
+                                    // Two echos: one for spacing in the log and the other to detail what will occur in each block 
+                        echo "$a --------------------------------------------------------------------------------------------------\n"
+                        echo "The script execution in this block will upload zip files in the $b $a environment on the $serverX server."
+
+                        // Node label determines where the script will execute
+                        node(label: "$serverX") {
+                            // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
+                            bat """
+                                pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                cd \\Administration\\Scripts
+                                copy AD_Combine.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Active-Directory
+                                copy AD_Combine.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Active-Directory@2
+                                """
+                            // Execute Powershell script
+                            script {
+                                powershell(". '.\\AD_Combine.ps1'; -region ${params.region} -ProjectCode ${params.project_code}")
+                            }
+                        } 
+                    }
+                }
+            }
+        }
+    }
+}   
