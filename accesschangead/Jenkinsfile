@@ -1,5 +1,5 @@
 /**************** Variable Definition ****************/
-// Create string array of servers based on user input
+// Create string array of user id's based on user input
 def String[] idGroup = "${params.id}".split(',');
 
 /**************** Pipeline Definition ****************/
@@ -14,14 +14,13 @@ pipeline {
             steps {
                 script {
                     // Error handling - if any parameter is left blank, the build will automatically fail
-                    if ("${params.region}" == '' || "${params.project_code}" == '' || "${params.group}" == '' || "${params.action}" == '' || "${params.id}" == '') {
+                    if ("${params.project_code}" == '' || "${params.group}" == '' || "${params.action}" == '' || "${params.id}" == '') {
                         error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
                     }
                 }
                 // Output parameters selected at time of build to Jenkins console
                 echo '------------------------------------------------------------------------------------------------------------------'
-                echo "Checking environment input... user selected: ${params.region}"
-                echo "Checking region input... user selected: ${params.project_code}"
+                echo "Checking project code input... user selected: ${params.project_code}"
                 echo "Checking group input(s)... user selected: ${params.group}"
                 echo "Checking action input(s)... user selected: ${params.action}"
                 echo "Checking id input(s)... user selected: ${params.id}"
@@ -37,19 +36,15 @@ pipeline {
                 // Script block to encapsulate three nested loops
                 script {
 
-                    // Loop through regions in the regionGroup String Array
+                    // Loop through regions in the idGroup String Array
                     for (x in idGroup) {
                                                                             
                         // Two echos: one for spacing in the log and the other to detail what will occur in each block 
-                        echo "$serverX --------------------------------------------------------------------------------------------------\n"
-                        echo "The script execution in this block will delete dump files in the environment on the $x server."
+                        echo "$x --------------------------------------------------------------------------------------------------\n"
+                        echo "The script execution in this block will ${params.action} $x in the ${params.action} group."
 
                         // Node label determines where the script will execute
                         node(label: "DEFRCOGAPP901") {
-                            // Cutoff for Planning Analytics selection until scripts are added in the future
-                            if ("${params.application}" == "Planning Analytics"){
-                                echo "call PA script"
-                            } else {
                                 // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
                                 bat """
                                     pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
@@ -59,7 +54,7 @@ pipeline {
                                     """
                                 // Execute Powershell script
                                 script {
-                                    powershell(". '.\\AccessChange.ps1 -region ${params.region}  -ProjectCode ${params.project_code} -Group ${params.group} -AddRemove ${params.action} -User_id  $x'")
+                                    powershell(". '.\\AccessChange.ps1 -ProjectCode ${params.project_code} -Group ${params.group} -AddRemove ${params.action} -User_id  $x'")
                                 }
                             }
                         } 
