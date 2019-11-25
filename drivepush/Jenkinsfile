@@ -90,21 +90,16 @@ pipeline {
 
                                         // Node label determines where the script will execute
                                         node(label: "$serverX") {
-                                            // Cutoff for Planning Analytics selection until scripts are added in the future
-                                            if ("${params.application}" == "Planning Analytics"){
-                                                echo "call PA script"
-                                            } else {
-                                                // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
-                                                bat """
-                                                    pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
-                                                    cd \\Administration\\Scripts
-                                                    copy DriverFiles.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Driver-Push
-                                                    copy DriverFiles.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Driver-Push@2
-                                                    """
-                                                // Execute Powershell script
-                                                script {
-                                                    powershell(". '.\\DriverFiles.ps1'; DriverFiles -env ${params.environment} -region ${params.region} -server $serverX -services $y")
-                                                }
+                                            // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
+                                            bat """
+                                                pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                                cd \\Administration\\Scripts
+                                                copy DriverFiles.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Driver-Push
+                                                copy DriverFiles.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Driver-Push@2
+                                                """
+                                            // Execute Powershell script
+                                            script {
+                                                powershell(". '.\\DriverFiles.ps1'; DriverFiles -env ${params.environment} -region ${params.region} -server $serverX -services $y")
                                             }
                                         } 
                                     }
