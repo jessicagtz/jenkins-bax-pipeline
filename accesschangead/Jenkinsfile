@@ -41,21 +41,20 @@ pipeline {
                                                                             
                         // Two echos: one for spacing in the log and the other to detail what will occur in each block 
                         echo "$x --------------------------------------------------------------------------------------------------\n"
-                        echo "The script execution in this block will ${params.action} $x in the ${params.action} group."
+                        echo "The script execution in this block will ${params.action} $x in the ${params.group} group."
 
                         // Node label determines where the script will execute
                         node(label: "DEFRCOGAPP901") {
-                                // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
-                                bat """
-                                    pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
-                                    cd \\Aministration\\Scripts
-                                    copy AccessChange_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Access-Change
-                                    copy AccessChange_Test.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Access-Change@2
-                                    """
-                                // Execute Powershell script
-                                script {
-                                    powershell(". '.\\AccessChange.ps1 -ProjectCode ${params.project_code} -Group ${params.group} -AddRemove ${params.action} -User_id  $x'")
-                                }
+                            // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
+                            bat """
+                                pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                                cd \\Administration\\Scripts
+                                copy AccessChange.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Access-Change
+                                copy AccessChange.ps1 C:\\Jenkins\\workspace\\Baxter-Pipelines\\Access-Change@2
+                                """
+                            // Execute Powershell script
+                            script {
+                                powershell(". '.\\AccessChange.ps1 -ProjectCode ${params.project_code} -Group ${params.group} -AddRemove ${params.action} -User_id  $x'")
                             }
                         } 
                     }
