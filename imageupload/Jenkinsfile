@@ -87,12 +87,12 @@ pipeline {
                                         bat """
                                             pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
                                             cd \\Administration\\Scripts
-                                            copy ImageUpload.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Image-Upload
-                                            copy ImageUpload.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Image-Upload@2
+                                            copy WebImage.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Image-Upload
+                                            copy WebImage.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Image-Upload@2
                                             """
                                         // Execute Powershell script
                                         script {
-                                            powershell(". '.\\ImageUpload.ps1'; ImageUpload -env ${params.environment} -region ${params.region} -server $serverX")
+                                            powershell(". '.\\WebImage.ps1'; WebImages -env ${params.environment} -region ${params.region} -server $serverX")
                                         }
                                     } 
                                 }

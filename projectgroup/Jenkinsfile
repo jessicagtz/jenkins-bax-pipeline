@@ -1,0 +1,54 @@
+/**************** Pipeline Definition ****************/
+pipeline {
+    // Allows pipeline to run on any available node if not explicitly defined 
+    agent any
+    // Create separate stages in build pipeline
+    stages {
+        // Define first stage in pipeline: review user inputs and output to Jenkins console
+        stage ('Parameter Validation') {
+        // Define steps in the 'Parameter Validation' stage
+            steps {
+                script {
+                    // Error handling - if any parameter is left blank, the build will automatically fail
+                    if ("${params.project_code}" == '') {
+                        error("Build failed because a required parameter was not selected.\n  All available parameters in this pipeline are required.")
+                    }
+                }
+                // Output parameters selected at time of build to Jenkins console
+                echo '------------------------------------------------------------------------------------------------------------------'
+                echo "Checking project code input... user selected: ${params.project_code}"
+                echo '------------------------------------------------------------------------------------------------------------------'
+            }
+        }
+        // Define second stage in pipeline: access NetApp and download file to local workspace
+        stage ('Execute Script') {
+
+            // Define steps in the 'Execute Script Stage'
+            steps {
+
+                // Script block to encapsulate execution
+                script {
+                                                                            
+                    // Two echos: one for spacing in the log and the other to detail what will occur in each block 
+                    echo "${params.project_code} --------------------------------------------------------------------------------------------------\n"
+                    echo "The script execution in this block will create a new project based upon the ${params.project_code} code."
+
+                    // Node label determines where the script will execute
+                    node(label: "DEFRCODAPP901") {
+                        // Execute Windows Batch File - Change directory to NetApp file share and copy script to Jenkins workspace
+                        bat """
+                            pushd \\\\USOHNETCLU001_data_lif1.aws.baxter.com\\Cognos_Analytics_Prod
+                            cd \\Administration\\Scripts
+                            copy ProjectGroupCreation.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Project-Group-Creation
+                            copy ProjectGroupCreation.ps1 C:\\Jenkins\\workspace\\Baxter-Cognos-Pipelines\\Project-Group-Creation@2
+                            """
+                        // Execute Powershell script
+                        script {
+                            powershell(". '.\\ProjectGroupCreation'  -ProjectCode ${params.project_code}")
+                        }
+                    } 
+                }
+            }
+        }
+    }
+}   
